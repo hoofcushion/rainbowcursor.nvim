@@ -4,6 +4,8 @@ A plugins for Neovim to rainbow the cursor.
 
 ### Demo
 
+https://github.com/abcdefg233/rainbowcursor.nvim/assets/32760059/fc28f6be-f9ea-4c02-a5c5-79bcbfc3ddaf
+
 ## Installation
 
 With [Lazy](https://github.com/folke/lazy.nvim)
