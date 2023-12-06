@@ -1,6 +1,6 @@
 # rainbowcursor.nvim
 
-A plugins for Neovim to rainbow the cursor.
+A plugin for Neovim to rainbow the cursor.
 
 ### Demo
 
