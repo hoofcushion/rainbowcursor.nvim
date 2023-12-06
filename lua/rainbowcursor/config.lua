@@ -1,3 +1,4 @@
+local Util=require("hcutil")
 local M={}
 M.options={
  hlgroup="Cursor",
@@ -13,32 +14,27 @@ M.options={
   create_api=true,
  },
 }
-local function number(arg)
- return type(arg)=="number"
+local function number(x)
+ return type(x)=="number"
 end
-local function integer(arg)
- return number(arg) and arg%1==0
+local function integer(x)
+ return number(x) and x%1==0
 end
 M.setup=function(user_options)
  local opts=vim.tbl_deep_extend("force",M.options,user_options or {})
- vim.validate({
-  hlgroup     ={opts.hlgroup,"string"},
-  autostart   ={opts.autostart,"boolean"},
-  interval    ={opts.interval,integer,"integer"},
-  color_amount={opts.color_amount,function(arg) return integer(arg) and arg>0 end,"integer arg, arg>0"},
-  hue_start   ={opts.hue_start,function(arg) return number(arg) and arg>=0 and arg<=360 end,"integer arg, 0<=arg<=360"},
-  saturation  ={opts.saturation,function(arg) return number(arg) and arg>=0 and arg<=100 end,"integer arg, 0<=arg<=100"},
-  lightness   ={opts.lightness,function(arg) return number(arg) and arg>=0 and arg<=100 end,"integer arg, 0<=arg<=100"},
-  others      ={opts.others,function(arg)
-   if type(arg)=="table" then
-    vim.validate({
-     create_cmd={arg.create_cmd,"boolean"},
-     create_var={arg.create_var,"boolean"},
-     create_api={arg.create_api,"boolean"},
-    })
-    return true
-   end
-  end,"{create_cmd=boolean,create_var=boolean,create_api=boolean}"},
+ Util.validate_tab(opts,{
+  hlgroup     ="string",
+  autostart   ="boolean",
+  interval    ={function(x) return integer(x) or type(x)=="string" end,"integer or string"},
+  color_amount={function(x) return integer(x) and x>0 end,"integer x, x>0"},
+  hue_start   ={function(x) return number(x) and x>=0 and x<=360 end,"integer x, 0<=x<=360"},
+  saturation  ={function(x) return number(x) and x>=0 and x<=100 end,"integer x, 0<=x<=100"},
+  lightness   ={function(x) return number(x) and x>=0 and x<=100 end,"integer x, 0<=x<=100"},
+  others      ={
+   create_cmd="boolean",
+   create_var="boolean",
+   create_api="boolean",
+  },
  })
  M.options=opts
 end
