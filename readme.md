@@ -15,6 +15,9 @@ With [Lazy](https://github.com/folke/lazy.nvim)
  "abcdefg233/rainbowcursor.nvim",
  cmd={"RainbowCursor"},
  opts={},
+ dependencies={
+  "abcdefg233/hcutil.nvim"
+ },
 }
 ```
 
@@ -53,6 +56,9 @@ Configuration
     -- If it sets false, you can still use
     -- require("rainbowcursor.api").
   },
+ },
+ dependencies={
+  "abcdefg233/hcutil.nvim"
  },
 }
 ```
@@ -179,6 +185,9 @@ Convenient setup for lazy.nvim users
     -- require("rainbowcursor.api").
   },
  },
+ dependencies={
+  "abcdefg233/hcutil.nvim"
+ },
 }
 ```
 
@@ -225,6 +234,9 @@ M.opts={
    -- If it sets false, you can still use
    -- require("rainbowcursor.api").
  },
+}
+M.dependencies={
+ "abcdefg233/hcutil.nvim"
 }
 return M
 ```
