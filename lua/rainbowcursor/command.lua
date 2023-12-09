@@ -1,12 +1,25 @@
+local HCUtil=require("hcutil")
+local Config=require("rainbowcursor.config")
 local Function=require("rainbowcursor.function")
-local M={loaded=false}
-M.RainbowCursor=function(cmd)
- local fargs=cmd.fargs
- Function.RainbowCursor(fargs[1])
+local M={}
+local registered=false
+local RainbowCursor=function(cmd)
+ Function.RainbowCursor(unpack(cmd.fargs))
 end
-M.setup=function()
- if M.loaded then return end
- M.loaded=true
- vim.api.nvim_create_user_command("RainbowCursor",M.RainbowCursor,{nargs="?"})
+local commands={
+ {"RainbowCursor",RainbowCursor,{nargs="*"}},
+}
+function M.setup()
+ if Config.options.others.create_cmd then
+  if registered==false then
+   HCUtil.create_user_commands(commands)
+   registered=true
+  end
+ else
+  if registered==true then
+   HCUtil.del_user_commands(commands)
+   registered=false
+  end
+ end
 end
 return M

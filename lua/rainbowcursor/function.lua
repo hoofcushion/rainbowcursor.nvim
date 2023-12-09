@@ -1,5 +1,8 @@
+local HCUtil=require("hcutil")
 local Config=require("rainbowcursor.config")
+local floor=math.floor
 local M={}
+local H={}
 ---@param p number
 ---@param q number
 ---@param t number
@@ -10,53 +13,45 @@ local function hue_to_rgb(p,q,t)
  if t<2/3 then return p+(q-p)*(2/3-t)*6 end
  return p
 end
----@param ... number
-local function percent_to_8bit(...)
- local args={...}
- for i=1,#args do
-  args[i]=math.floor(args[i]*255)
- end
- return unpack(args)
-end
----@param h integer # Hue
----@param s integer # Saturation
----@param l integer # Lightness
+---@param h number # Hue
+---@param s number # Saturation
+---@param l number # Lightness
+---@return ... integer
 local function hsl_to_rgb(h,s,l)
- ---@diagnostic disable-next-line: cast-local-type
- h,s,l=h/360,s/100,l/100
- local r,g,b
+ l=l/100
  if s==0 then
-  r,g,b=l,l,l
- else
-  local q=l<0.5 and l*(1+s) or l+s-l*s
-  local p=2*l-q
-  r,g,b=hue_to_rgb(p,q,h+1/3),hue_to_rgb(p,q,h),hue_to_rgb(p,q,h-1/3)
+  l=floor(l*255)
+  return l,l,l
  end
- return percent_to_8bit(r,g,b)
+ h,s=h/360,s/100
+ local q=l<0.5 and l*(1+s) or l+s-l*s
+ local p=2*l-q
+ local r,g,b=hue_to_rgb(p,q,h+1/3),hue_to_rgb(p,q,h),hue_to_rgb(p,q,h-1/3)
+ return floor(r*255),floor(g*255),floor(b*255)
 end
 local function rgb_to_colorcode(r,g,b)
  return string.format("#%02x%02x%02x",r,g,b)
 end
-local function make_hue_table()
- local hue_start=Config.options.hue_start
- local color_amount=Config.options.color_amount
- local saturation=Config.options.saturation
- local lightness=Config.options.lightness
- local hue_table={}
- for hue=hue_start,360,360/color_amount do
-  table.insert(hue_table,rgb_to_colorcode(hsl_to_rgb(hue,saturation,lightness)))
+local function make_color_table()
+ local color_table={}
+ local hue        =Config.options.hue_start
+ local saturation =Config.options.saturation
+ local lightness  =Config.options.lightness
+ local step       =360/Config.options.color_amount
+ while hue<360 do
+  table.insert(color_table,rgb_to_colorcode(hsl_to_rgb(hue,saturation,lightness)))
+  hue=hue+step
  end
- return hue_table
+ return color_table
 end
-local function get_rainbowcursor_schedule()
- local hue_table=make_hue_table()
- local pos=1
- return vim.schedule_wrap(function()
-  vim.api.nvim_set_hl(0,Config.options.hlgroup,{bg=hue_table[pos]})
-  pos=pos%Config.options.color_amount+1
- end)
+local function create_color_iter(step)
+ local hlgroup     =Config.options.hlgroup
+ local color_amount=Config.options.color_amount
+ return function()
+  vim.api.nvim_set_hl(0,hlgroup,{bg=H.color_table[H.color_pos]})
+  H.color_pos=H.color_pos%color_amount+step
+ end
 end
-local timer=vim.loop.new_timer()
 local function set_cursor_hlgroup(hlgroup)
  local guicursor={}
  for item in string.gmatch(vim.o.guicursor,"[^,]+") do
@@ -69,38 +64,99 @@ local function set_cursor_hlgroup(hlgroup)
  vim.opt.guicursor=guicursor
 end
 local Actions={}
-Actions.RainbowCursor={
+M.Actions=Actions
+Actions.Timer={
  Start=function()
-  if vim.loop.is_active(timer) then
-   print("RainbowCursor: Start faild, The Timer is already active.")
+  if H.main_timer:is_active() then
+   print("RainbowCursor: Timer Start failed, The Timer is active.")
   else
-   local interval=math.floor(Config.options.interval/Config.options.color_amount)
-   timer:start(0,interval,get_rainbowcursor_schedule())
    set_cursor_hlgroup(Config.options.hlgroup)
+   local interval=floor(Config.options.timer.interval/Config.options.color_amount)
+   H.main_timer:start(0,interval,H.scheduled_color_iter)
   end
  end,
  Stop=function()
-  if vim.loop.is_active(timer) then
-   timer:stop()
+  if H.main_timer:is_active() then
+   H.main_timer:stop()
    set_cursor_hlgroup(nil)
   else
-   print("RainbowCursor: Stop faild, The Timer is already inactive.")
+   print("RainbowCursor: Timer Stop failed, The Timer is already inactive.")
   end
  end,
  Toggle=function()
-  if vim.loop.is_active(timer) then
-   Actions.RainbowCursor.Stop()
+  if H.main_timer:is_active() then
+   Actions.Timer.Stop()
   else
-   Actions.RainbowCursor.Start()
+   Actions.Timer.Start()
   end
  end,
 }
-function M.RainbowCursor(arg)
- if not arg then return end
- local action=Actions.RainbowCursor[arg]
- if action then
-  action()
+Actions.Autocmd={
+ Start=function()
+  if H.autocmd_obj.active then
+   print("RainbowCursor: Autocmd Start failed, The Autocmd is active.")
+  else
+   set_cursor_hlgroup(Config.options.hlgroup)
+   H.autocmd_obj:start()
+  end
+ end,
+ Stop=function()
+  if H.autocmd_obj.active then
+   H.autocmd_obj:delete()
+   set_cursor_hlgroup(nil)
+  else
+   print("RainbowCursor: Autocmd Stop failed, The Autocmd is active.")
+  end
+ end,
+ Toggle=function()
+  if H.autocmd_obj.active then
+   Actions.Autocmd.Start()
+  else
+   Actions.Autocmd.Stop()
+  end
+ end,
+}
+Actions.RainbowCursor={
+ Timer=Actions.Timer,
+ Autocmd=Actions.Autocmd,
+}
+function M.RainbowCursor(...)
+ local args={...}
+ local action=Actions.RainbowCursor
+ for i=1,#args do
+  action=action[args[i]]
+  if not action then return end
+  if type(action)=="function" then
+   action()
+   return
+  end
  end
 end
-M.Actions=Actions
+local function color_table_setup()
+ H.color_table=make_color_table()
+ H.color_pos  =1
+end
+local function timer_setup()
+ H.main_timer          =vim.loop.new_timer()
+ local timer_color_iter=create_color_iter(1)
+ H.timer_color_iter    =timer_color_iter
+ H.scheduled_color_iter=vim.schedule_wrap(timer_color_iter)
+end
+local function autocmd_setup()
+ local autocmd_color_iter=create_color_iter(floor(Config.options.color_amount/Config.options.autocmd.interval))
+ H.autocmd_color_iter    =autocmd_color_iter
+ H.autocmd_obj           =HCUtil.create_autocmd_object(Config.options.autocmd.group,{
+  func={Config.options.autocmd.event,{
+   callback=autocmd_color_iter,
+  }},
+ })
+end
+function M.setup()
+ color_table_setup()
+ timer_setup()
+ autocmd_setup()
+ M.TimerColorIter  =H.timer_color_iter
+ M.AutocmdColorIter=H.autocmd_color_iter
+end
+M.setup()
 return M

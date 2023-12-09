@@ -1,21 +1,33 @@
-local M={loaded=false}
 local Config=require("rainbowcursor.config")
+local Function=require("rainbowcursor.function")
+local Command=require("rainbowcursor.command")
+local M={}
+local loaded=false
 M.options=Config.options
 function M.setup(user_options)
  Config.setup(user_options)
- local others=Config.options.others
- if others.create_cmd==true then
-  require("rainbowcursor.command").setup()
- end
- if others.create_var==true then
+ Command.setup()
+ local opts=Config.options
+ if opts.others.create_var then
   _G.RainbowCursor=M
+ else
+  _G.RainbowCursor=nil
  end
- if others.create_api==true then
+ if opts.others.create_api then
   M.API=require("rainbowcursor.api")
+ else
+  M.API=nil
  end
- if M.options.autostart then
-  require("rainbowcursor.function").Actions.RainbowCursor.Start()
+ if loaded then
+  Function.setup() -- reset parameter
+ else
+  if opts.autocmd.autostart then
+   Function.Actions.RainbowCursor.Autocmd.Start()
+  end
+  if opts.timer.autostart then
+   Function.Actions.RainbowCursor.Timer.Start()
+  end
+  loaded=true
  end
- M.loaded=true
 end
 return M
