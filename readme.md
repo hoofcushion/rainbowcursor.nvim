@@ -151,12 +151,12 @@ Normal Keys
 ```lua
 local keys={
  [{"n"}]={
-  {"<leader>rcts",_G.RainbowCursor.API.Timer_Start,   "RainbowCursor Timer start"},
-  {"<leader>rctS",_G.RainbowCursor.API.Timer_Stop,    "RainbowCursor Timer stop"},
-  {"<leader>rctt",_G.RainbowCursor.API.Timer_Toggle,  "RainbowCursor Timer toggle"},
-  {"<leader>rcas",_G.RainbowCursor.API.Autocmd_Start, "RainbowCursor Autocmd start"},
-  {"<leader>rcaS",_G.RainbowCursor.API.Autocmd_Stop,  "RainbowCursor Autocmd stop"},
-  {"<leader>rcat",_G.RainbowCursor.API.Autocmd_Toggle,"RainbowCursor Autocmd toggle"},
+  {"<leader>rcts",function() _G.RainbowCursor.API.Timer_Start() end,   "RainbowCursor Timer start"},
+  {"<leader>rctS",function() _G.RainbowCursor.API.Timer_Stop() end,    "RainbowCursor Timer stop"},
+  {"<leader>rctt",function() _G.RainbowCursor.API.Timer_Toggle() end,  "RainbowCursor Timer toggle"},
+  {"<leader>rcas",function() _G.RainbowCursor.API.Autocmd_Start() end, "RainbowCursor Autocmd start"},
+  {"<leader>rcaS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  "RainbowCursor Autocmd stop"},
+  {"<leader>rcat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,"RainbowCursor Autocmd toggle"},
  },
 }
 local default_opts={noremap=true,silent=true}
@@ -173,12 +173,12 @@ Lazy keys
 
 ```lua
 local keys={
- {"<leader>rcts",_G.RainbowCursor.API.Timer_Start,   desc="RainbowCursor Timer start"},
- {"<leader>rctS",_G.RainbowCursor.API.Timer_Stop,    desc="RainbowCursor Timer stop"},
- {"<leader>rctt",_G.RainbowCursor.API.Timer_Toggle,  desc="RainbowCursor Timer toggle"},
- {"<leader>rcas",_G.RainbowCursor.API.Autocmd_Start, desc="RainbowCursor Autocmd start"},
- {"<leader>rcaS",_G.RainbowCursor.API.Autocmd_Stop,  desc="RainbowCursor Autocmd stop"},
- {"<leader>rcat",_G.RainbowCursor.API.Autocmd_Toggle,desc="RainbowCursor Autocmd toggle"},
+ {"<leader>rcts",function() _G.RainbowCursor.API.Timer_Start() end,   desc="RainbowCursor Timer start"},
+ {"<leader>rctS",function() _G.RainbowCursor.API.Timer_Stop() end,    desc="RainbowCursor Timer stop"},
+ {"<leader>rctt",function() _G.RainbowCursor.API.Timer_Toggle() end,  desc="RainbowCursor Timer toggle"},
+ {"<leader>rcas",function() _G.RainbowCursor.API.Autocmd_Start() end, desc="RainbowCursor Autocmd start"},
+ {"<leader>rcaS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  desc="RainbowCursor Autocmd stop"},
+ {"<leader>rcat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,desc="RainbowCursor Autocmd toggle"},
 }
 ```
 
@@ -191,12 +191,12 @@ local spec={
  "abcdefg233/rainbowcursor.nvim",
  cmd={"RainbowCursor"},
  keys={
-  {"<leader>rcts",_G.RainbowCursor.API.Timer_Start,   desc="RainbowCursor Timer start"},
-  {"<leader>rctS",_G.RainbowCursor.API.Timer_Stop,    desc="RainbowCursor Timer stop"},
-  {"<leader>rctt",_G.RainbowCursor.API.Timer_Toggle,  desc="RainbowCursor Timer toggle"},
-  {"<leader>rcas",_G.RainbowCursor.API.Autocmd_Start, desc="RainbowCursor Autocmd start"},
-  {"<leader>rcaS",_G.RainbowCursor.API.Autocmd_Stop,  desc="RainbowCursor Autocmd stop"},
-  {"<leader>rcat",_G.RainbowCursor.API.Autocmd_Toggle,desc="RainbowCursor Autocmd toggle"},
+  {"<leader>rcts",function() _G.RainbowCursor.API.Timer_Start() end,   desc="RainbowCursor Timer start"},
+  {"<leader>rctS",function() _G.RainbowCursor.API.Timer_Stop() end,    desc="RainbowCursor Timer stop"},
+  {"<leader>rctt",function() _G.RainbowCursor.API.Timer_Toggle() end,  desc="RainbowCursor Timer toggle"},
+  {"<leader>rcas",function() _G.RainbowCursor.API.Autocmd_Start() end, desc="RainbowCursor Autocmd start"},
+  {"<leader>rcaS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  desc="RainbowCursor Autocmd stop"},
+  {"<leader>rcat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,desc="RainbowCursor Autocmd toggle"},
  },
  opts={
   hlgroup     ="RainbowCursor",
