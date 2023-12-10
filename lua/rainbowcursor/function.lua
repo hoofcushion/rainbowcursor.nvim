@@ -63,6 +63,13 @@ local function set_cursor_hlgroup(hlgroup)
  end
  vim.opt.guicursor=guicursor
 end
+local function update_cursor_hlgroup()
+ if H.autocmd_obj.active or H.main_timer:is_active() then
+  set_cursor_hlgroup(Config.options.hlgroup)
+  return
+ end
+ set_cursor_hlgroup(nil)
+end
 local Actions={}
 M.Actions=Actions
 Actions.Timer={
@@ -70,7 +77,7 @@ Actions.Timer={
   if H.main_timer:is_active() then
    print("RainbowCursor: Timer Start failed, The Timer is active.")
   else
-   set_cursor_hlgroup(Config.options.hlgroup)
+   update_cursor_hlgroup()
    local interval=floor(Config.options.timer.interval/Config.options.color_amount)
    H.main_timer:start(0,interval,H.scheduled_color_iter)
   end
@@ -78,7 +85,7 @@ Actions.Timer={
  Stop=function()
   if H.main_timer:is_active() then
    H.main_timer:stop()
-   set_cursor_hlgroup(nil)
+   update_cursor_hlgroup()
   else
    print("RainbowCursor: Timer Stop failed, The Timer is already inactive.")
   end
@@ -96,14 +103,14 @@ Actions.Autocmd={
   if H.autocmd_obj.active then
    print("RainbowCursor: Autocmd Start failed, The Autocmd is active.")
   else
-   set_cursor_hlgroup(Config.options.hlgroup)
+   update_cursor_hlgroup()
    H.autocmd_obj:start()
   end
  end,
  Stop=function()
   if H.autocmd_obj.active then
    H.autocmd_obj:delete()
-   set_cursor_hlgroup(nil)
+   update_cursor_hlgroup()
   else
    print("RainbowCursor: Autocmd Stop failed, The Autocmd is active.")
   end
@@ -137,8 +144,8 @@ local function color_table_setup()
  H.color_pos  =1
 end
 local function timer_setup()
- H.main_timer          =vim.loop.new_timer()
  local timer_color_iter=create_color_iter(1)
+ H.main_timer          =vim.loop.new_timer()
  H.timer_color_iter    =timer_color_iter
  H.scheduled_color_iter=vim.schedule_wrap(timer_color_iter)
 end
