@@ -161,7 +161,7 @@ local keys={
  },
 }
 local default_opts={noremap=true,silent=true}
-for modes,key in ipairs(keys) do
+for modes,key in pairs(keys) do
  for _,mode in ipairs(modes) do
   local opts=default_opts
   opts.desc=key[3]
