@@ -133,6 +133,7 @@ You can use it in these following terms
 |RainbowCursor Autocmd Start|Start the RainbowCursor Autocmd|
 |RainbowCursor Autocmd Stop|Delete the RainbowCursor Autocmd|
 |RainbowCursor Autocmd Toggle|Toggle the RainbowCursor Autocmd|
+
 Default Commands
 
 ```
