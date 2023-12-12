@@ -53,6 +53,7 @@ local function create_color_iter(step)
   if int_pos>=H.color_pos then
    hl_opts.bg=H.color_table[int_pos]
    vim.api.nvim_set_hl(0,hlgroup,hl_opts)
+   vim.api.nvim_command("redraw")
   end
   H.color_pos=H.color_pos%color_amount+step
  end
@@ -68,15 +69,17 @@ local function set_cursor_hlgroup(hlgroup)
  end
  vim.opt.guicursor=guicursor
 end
-local function update_cursor_hlgroup(act)
- if act~=H.hl_on then
-  if H.hl_on==false then
-   set_cursor_hlgroup(Config.options.hlgroup)
-   H.hl_on=true
-  else
-   set_cursor_hlgroup(false)
-   H.hl_on=false
-  end
+---@param target boolean
+local function update_cursor_hlgroup(target)
+ if target==H.hlgroup_on then
+  return
+ end
+ if H.hlgroup_on==false then
+  set_cursor_hlgroup(Config.options.hlgroup)
+  H.hlgroup_on=true
+ elseif H.main_timer:is_active()==false and H.autocmd_obj.active==false then
+  set_cursor_hlgroup(false)
+  H.hlgroup_on=false
  end
 end
 local Actions={}
@@ -149,7 +152,7 @@ function M.RainbowCursor(...)
  end
 end
 local function satus_setup()
- H.hl_on      =false
+ H.hlgroup_on      =false
  H.color_table=make_color_table()
  H.color_pos  =1
 end
@@ -167,6 +170,7 @@ local function autocmd_setup()
  })
 end
 function M.setup()
+ H={}
  satus_setup()
  timer_setup()
  autocmd_setup()
