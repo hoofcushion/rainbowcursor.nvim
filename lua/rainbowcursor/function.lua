@@ -53,7 +53,6 @@ local function create_color_iter(step)
   if int_pos>=H.color_pos then
    hl_opts.bg=H.color_table[int_pos]
    vim.api.nvim_set_hl(0,hlgroup,hl_opts)
-   vim.api.nvim_command("redraw")
   end
   H.color_pos=H.color_pos%color_amount+step
  end
