@@ -2,9 +2,19 @@
 
 A plugin for Neovim to rainbow the cursor.
 
-### Demo
+## Demo
 
 https://github.com/abcdefg233/rainbowcursor.nvim/assets/32760059/fc28f6be-f9ea-4c02-a5c5-79bcbfc3ddaf
+
+## Important
+
+The command `redraw` could't refresh the cursor color in some terminal simulator, and I don't know why.
+
+|Terminals I tried|Is working|
+|:--|---|
+|wezterm|⭕|
+|konsole|❌|
+|xfce4-terminal|❌|
 
 ## Installation
 
