@@ -69,6 +69,8 @@ local spec={
    -- require("rainbowcursor").API,
    -- If it sets false, you can still use
    -- require("rainbowcursor.api").
+   reuse_opts=false,
+   -- New setup reuse old options or base on default options.
   },
  },
  dependencies={
@@ -240,6 +242,8 @@ local spec={
    -- require("rainbowcursor").API,
    -- If it sets false, you can still use
    -- require("rainbowcursor.api").
+   reuse_opts=false,
+   -- New setup reuse old options or base on default options.
   },
  },
  dependencies={
@@ -307,6 +311,8 @@ M.opts={
   -- require("rainbowcursor").API,
   -- If it sets false, you can still use
   -- require("rainbowcursor.api").
+  reuse_opts=false,
+  -- New setup reuse old options or base on default options.
  },
 }
 M.dependencies={

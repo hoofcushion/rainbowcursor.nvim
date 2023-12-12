@@ -47,8 +47,13 @@ end
 local function create_color_iter(step)
  local hlgroup     =Config.options.hlgroup
  local color_amount=Config.options.color_amount
+ local hl_opts     ={}
  return function()
-  vim.api.nvim_set_hl(0,hlgroup,{bg=H.color_table[H.color_pos]})
+  local int_pos=floor(H.color_pos)
+  if int_pos>=H.color_pos then
+   hl_opts.bg=H.color_table[int_pos]
+   vim.api.nvim_set_hl(0,hlgroup,hl_opts)
+  end
   H.color_pos=H.color_pos%color_amount+step
  end
 end
@@ -63,12 +68,16 @@ local function set_cursor_hlgroup(hlgroup)
  end
  vim.opt.guicursor=guicursor
 end
-local function update_cursor_hlgroup()
- if H.autocmd_obj.active or H.main_timer:is_active() then
-  set_cursor_hlgroup(Config.options.hlgroup)
-  return
+local function update_cursor_hlgroup(act)
+ if act~=H.hl_on then
+  if H.hl_on==false then
+   set_cursor_hlgroup(Config.options.hlgroup)
+   H.hl_on=true
+  else
+   set_cursor_hlgroup(false)
+   H.hl_on=false
+  end
  end
- set_cursor_hlgroup(nil)
 end
 local Actions={}
 M.Actions=Actions
@@ -77,15 +86,15 @@ Actions.Timer={
   if H.main_timer:is_active() then
    print("RainbowCursor: Timer Start failed, The Timer is active.")
   else
-   update_cursor_hlgroup()
    local interval=floor(Config.options.timer.interval/Config.options.color_amount)
+   update_cursor_hlgroup(true)
    H.main_timer:start(0,interval,H.scheduled_color_iter)
   end
  end,
  Stop=function()
   if H.main_timer:is_active() then
    H.main_timer:stop()
-   update_cursor_hlgroup()
+   update_cursor_hlgroup(false)
   else
    print("RainbowCursor: Timer Stop failed, The Timer is already inactive.")
   end
@@ -103,14 +112,14 @@ Actions.Autocmd={
   if H.autocmd_obj.active then
    print("RainbowCursor: Autocmd Start failed, The Autocmd is active.")
   else
-   update_cursor_hlgroup()
+   update_cursor_hlgroup(true)
    H.autocmd_obj:start()
   end
  end,
  Stop=function()
   if H.autocmd_obj.active then
    H.autocmd_obj:delete()
-   update_cursor_hlgroup()
+   update_cursor_hlgroup(false)
   else
    print("RainbowCursor: Autocmd Stop failed, The Autocmd is active.")
   end
@@ -139,31 +148,29 @@ function M.RainbowCursor(...)
   end
  end
 end
-local function color_table_setup()
+local function satus_setup()
+ H.hl_on      =false
  H.color_table=make_color_table()
  H.color_pos  =1
 end
 local function timer_setup()
- local timer_color_iter=create_color_iter(1)
  H.main_timer          =vim.loop.new_timer()
- H.timer_color_iter    =timer_color_iter
- H.scheduled_color_iter=vim.schedule_wrap(timer_color_iter)
+ H.timer_color_iter    =create_color_iter(1)
+ H.scheduled_color_iter=vim.schedule_wrap(H.timer_color_iter)
 end
 local function autocmd_setup()
- local autocmd_color_iter=create_color_iter(floor(Config.options.color_amount/Config.options.autocmd.interval))
- H.autocmd_color_iter    =autocmd_color_iter
- H.autocmd_obj           =HCUtil.create_autocmd_object(Config.options.autocmd.group,{
+ H.autocmd_color_iter=create_color_iter(Config.options.color_amount/Config.options.autocmd.interval)
+ H.autocmd_obj       =HCUtil.create_autocmd_object(Config.options.autocmd.group,{
   func={Config.options.autocmd.event,{
-   callback=autocmd_color_iter,
+   callback=H.autocmd_color_iter,
   }},
  })
 end
 function M.setup()
- color_table_setup()
+ satus_setup()
  timer_setup()
  autocmd_setup()
  M.TimerColorIter  =H.timer_color_iter
  M.AutocmdColorIter=H.autocmd_color_iter
 end
-M.setup()
 return M

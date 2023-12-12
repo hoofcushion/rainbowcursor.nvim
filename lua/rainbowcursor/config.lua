@@ -1,6 +1,6 @@
 local HCUtil=require("hcutil")
 local M={}
-M.options={
+local default_opts={
  hlgroup     ="RainbowCursor",
  -- The RainbowCursor High Light Group's name.
  autocmd     ={
@@ -42,8 +42,11 @@ M.options={
   -- require("rainbowcursor").API,
   -- If it sets false, you can still use
   -- require("rainbowcursor.api").
+  reuse_opts=false,
+  -- New setup reuse old options or base on default options.
  },
 }
+M.options=vim.deepcopy(default_opts)
 local function number(x)
  return type(x)=="number"
 end
@@ -53,33 +56,39 @@ end
 local function is_string(x)
  return type(x)=="string"
 end
-M.setup=function(user_options)
- local opts=M.options
- if type(user_options) then
-  opts=vim.tbl_deep_extend("force",opts,user_options)
+local valitab={
+ hlgroup     ="string",
+ autocmd     ={
+  autostart="boolean",
+  interval ={function(x) return integer(x) and x>0 or is_string(x) end,"integer x, x>0; or string"},
+  group    ="string",
+  event    ={"string","table"},
+ },
+ timer       ={
+  autostart="boolean",
+  interval={function(x) return integer(x) and x>0 or is_string(x) end,"integer x, x>0; or string"},
+ },
+ color_amount={function(x) return integer(x) and x>0 end,"integer x, x>0"},
+ hue_start   ={function(x) return number(x) and x>=0 and x<=360 end,"integer x, 0<=x<=360"},
+ saturation  ={function(x) return number(x) and x>=0 and x<=100 end,"integer x, 0<=x<=100"},
+ lightness   ={function(x) return number(x) and x>=0 and x<=100 end,"integer x, 0<=x<=100"},
+ others      ={
+  create_cmd="boolean",
+  create_var="boolean",
+  create_api="boolean",
+  reuse_opts="boolean",
+ },
+}
+---@param user_options table
+function M.setup(user_options)
+ if type(user_options)~="table" then
+  return
  end
- HCUtil.validate_tab(opts,{
-  hlgroup     ="string",
-  autocmd     ={
-   autostart="boolean",
-   interval ={function(x) return integer(x) and x>0 or is_string(x) end,"integer x, x>0; or string"},
-   group    ="string",
-   event    ={"string","table"},
-  },
-  timer       ={
-   autostart="boolean",
-   interval={function(x) return integer(x) and x>0 or is_string(x) end,"integer x, x>0; or string"},
-  },
-  color_amount={function(x) return integer(x) and x>0 end,"integer x, x>0"},
-  hue_start   ={function(x) return number(x) and x>=0 and x<=360 end,"integer x, 0<=x<=360"},
-  saturation  ={function(x) return number(x) and x>=0 and x<=100 end,"integer x, 0<=x<=100"},
-  lightness   ={function(x) return number(x) and x>=0 and x<=100 end,"integer x, 0<=x<=100"},
-  others      ={
-   create_cmd="boolean",
-   create_var="boolean",
-   create_api="boolean",
-  },
- })
+ local opts=vim.tbl_deep_extend("force",default_opts,user_options)
+ HCUtil.validate_tab(opts,valitab)
+ if opts.others.reuse_opts==true then
+  opts=vim.tbl_deep_extend("force",M.options,user_options)
+ end
  M.options=opts
 end
 return M

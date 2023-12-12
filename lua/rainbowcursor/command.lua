@@ -10,13 +10,12 @@ local commands={
  {"RainbowCursor",RainbowCursor,{nargs="*"}},
 }
 function M.setup()
- if Config.options.others.create_cmd then
-  if registered==false then
+ local create_cmd=Config.options.others.create_cmd
+ if create_cmd~=registered then
+  if create_cmd==true then
    HCUtil.create_user_commands(commands)
    registered=true
-  end
- else
-  if registered==true then
+  else
    HCUtil.del_user_commands(commands)
    registered=false
   end
