@@ -10,11 +10,11 @@ https://github.com/abcdefg233/rainbowcursor.nvim/assets/32760059/fc28f6be-f9ea-4
 
 The command `redraw` could't refresh the cursor color in some terminal simulator, and I don't know why.
 
-|Terminals I tried|Is working|
-|:--|---|
-|wezterm|⭕|
-|konsole|❌|
-|xfce4-terminal|❌|
+| Terminals I tried | Is working |
+| :---------------- | ---------- |
+| wezterm           | ⭕         |
+| konsole           | ❌         |
+| xfce4-terminal    | ❌         |
 
 ## Installation
 
@@ -43,7 +43,7 @@ local spec={
   autocmd     ={
    autostart=true,
    -- Whether or not to automatically start autocmd after setup.
-   interval =90,
+   loopover =36,
    -- How many time that the event triggered will loop over the color table.
    group    ="RainbowCursor",
    -- The RainbowCursor Autocmd Group's name .
@@ -53,21 +53,23 @@ local spec={
   timer       ={
    autostart=true,
    -- Whether or not to automatically start timer after setup.
-   interval=18000,
-   -- How long (in milliseconds) that the timer will need to loop over the color table.
+   loopover=180,
+   -- How many time that the timer triggered will loop over the color table.
+   interval=100,
+   -- The interval of timer to be triggered (in milliseconds).
   },
-  color_amount=360,
-  -- How many colors are in the color table.
-  -- If *timer.interval is 18000 and *color_amount is 360, then the color will change in every 50 ms (18000/360)
-  -- The speed can't not lower than 1ms, because of the Neovim's limit.
-  -- Set less *color_amount make color change seems faster and more will make it smoother.
-  hue_start   =0,
-  -- The hue of hsl that RainbowCursor start with.
-  -- 0 means red, and 360 means red too.
-  saturation  =100,
-  -- The saturation of hsl, lower than 100 will dim the color.
-  lightness   =50,
-  -- The lightness of hsl, high or lower than 50 will make color lighter or darker.
+  channels={
+   format="hsl",
+   -- Color format, could be "hsl" "rgb" or a function that takes variable parameters and return 3 number: r,g,b.
+   -- format=function(a,b,c...x,y,z) return r,g,b end
+   -- The inputs are defined by the following array:
+   {{0,360,1}},
+   -- The 1st input of color format function, default is the hue of hsl
+   {{100,100,0}},
+   -- The 2nd input of color format function, default is the saturation of hsl
+   {{50,50,0}},
+   -- The 3rd input of color format function, default is the lightness of hsl
+  },
   others      ={
    create_cmd=true,
    -- Create command "RainbowCursor" after setup.
@@ -79,8 +81,6 @@ local spec={
    -- require("rainbowcursor").API,
    -- If it sets false, you can still use
    -- require("rainbowcursor.api").
-   reuse_opts=false,
-   -- New setup reuse old options or base on default options.
   },
  },
  dependencies={
@@ -137,14 +137,14 @@ If `*others.create_cmd==true`, you will get a command `RainbowCursor` after setu
 
 You can use it in these following terms
 
-|Commands|Behaviors|
-|:--|:--|
-|RainbowCursor Timer Start|Start the RainbowCursor Timer|
-|RainbowCursor Timer Stop|Stop the RainbowCursor Timer|
-|RainbowCursor Timer Toggle|Toggle the RainbowCursor Timer|
-|RainbowCursor Autocmd Start|Start the RainbowCursor Autocmd|
-|RainbowCursor Autocmd Stop|Delete the RainbowCursor Autocmd|
-|RainbowCursor Autocmd Toggle|Toggle the RainbowCursor Autocmd|
+| Commands                     | Behaviors                        |
+| :--------------------------- | :------------------------------- |
+| RainbowCursor Timer Start    | Start the RainbowCursor Timer    |
+| RainbowCursor Timer Stop     | Stop the RainbowCursor Timer     |
+| RainbowCursor Timer Toggle   | Toggle the RainbowCursor Timer   |
+| RainbowCursor Autocmd Start  | Start the RainbowCursor Autocmd  |
+| RainbowCursor Autocmd Stop   | Delete the RainbowCursor Autocmd |
+| RainbowCursor Autocmd Toggle | Toggle the RainbowCursor Autocmd |
 
 Default Commands
 
@@ -164,21 +164,19 @@ Normal Keys
 ```lua
 local keys={
  [{"n"}]={
-  {"<leader>rcts",function() _G.RainbowCursor.API.Timer_Start() end,   "RainbowCursor Timer start"},
-  {"<leader>rctS",function() _G.RainbowCursor.API.Timer_Stop() end,    "RainbowCursor Timer stop"},
-  {"<leader>rctt",function() _G.RainbowCursor.API.Timer_Toggle() end,  "RainbowCursor Timer toggle"},
-  {"<leader>rcas",function() _G.RainbowCursor.API.Autocmd_Start() end, "RainbowCursor Autocmd start"},
-  {"<leader>rcaS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  "RainbowCursor Autocmd stop"},
-  {"<leader>rcat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,"RainbowCursor Autocmd toggle"},
+  {"<leader>rts",function() _G.RainbowCursor.API.Timer_Start() end,   "RainbowCursor Timer start"},
+  {"<leader>rtS",function() _G.RainbowCursor.API.Timer_Stop() end,    "RainbowCursor Timer stop"},
+  {"<leader>rtt",function() _G.RainbowCursor.API.Timer_Toggle() end,  "RainbowCursor Timer toggle"},
+  {"<leader>ras",function() _G.RainbowCursor.API.Autocmd_Start() end, "RainbowCursor Autocmd start"},
+  {"<leader>raS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  "RainbowCursor Autocmd stop"},
+  {"<leader>rat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,"RainbowCursor Autocmd toggle"},
  },
 }
 local default_opts={noremap=true,silent=true}
 for modes,key in pairs(keys) do
- for _,mode in ipairs(modes) do
-  local opts=default_opts
-  opts.desc=key[3]
-  vim.keymap.set(mode,key[1],key[2],opts)
- end
+ local opts=default_opts
+ opts.desc=key[3]
+ vim.keymap.set(modes,key[1],key[2],opts)
 end
 ```
 
@@ -186,12 +184,12 @@ Lazy keys
 
 ```lua
 local keys={
- {"<leader>rcts",function() _G.RainbowCursor.API.Timer_Start() end,   desc="RainbowCursor Timer start"},
- {"<leader>rctS",function() _G.RainbowCursor.API.Timer_Stop() end,    desc="RainbowCursor Timer stop"},
- {"<leader>rctt",function() _G.RainbowCursor.API.Timer_Toggle() end,  desc="RainbowCursor Timer toggle"},
- {"<leader>rcas",function() _G.RainbowCursor.API.Autocmd_Start() end, desc="RainbowCursor Autocmd start"},
- {"<leader>rcaS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  desc="RainbowCursor Autocmd stop"},
- {"<leader>rcat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,desc="RainbowCursor Autocmd toggle"},
+ {"<leader>rts",function() _G.RainbowCursor.API.Timer_Start() end,   desc="RainbowCursor Timer start"},
+ {"<leader>rtS",function() _G.RainbowCursor.API.Timer_Stop() end,    desc="RainbowCursor Timer stop"},
+ {"<leader>rtt",function() _G.RainbowCursor.API.Timer_Toggle() end,  desc="RainbowCursor Timer toggle"},
+ {"<leader>ras",function() _G.RainbowCursor.API.Autocmd_Start() end, desc="RainbowCursor Autocmd start"},
+ {"<leader>raS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  desc="RainbowCursor Autocmd stop"},
+ {"<leader>rat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,desc="RainbowCursor Autocmd toggle"},
 }
 ```
 
@@ -204,57 +202,36 @@ local spec={
  "abcdefg233/rainbowcursor.nvim",
  cmd={"RainbowCursor"},
  keys={
-  {"<leader>rcts",function() _G.RainbowCursor.API.Timer_Start() end,   desc="RainbowCursor Timer start"},
-  {"<leader>rctS",function() _G.RainbowCursor.API.Timer_Stop() end,    desc="RainbowCursor Timer stop"},
-  {"<leader>rctt",function() _G.RainbowCursor.API.Timer_Toggle() end,  desc="RainbowCursor Timer toggle"},
-  {"<leader>rcas",function() _G.RainbowCursor.API.Autocmd_Start() end, desc="RainbowCursor Autocmd start"},
-  {"<leader>rcaS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  desc="RainbowCursor Autocmd stop"},
-  {"<leader>rcat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,desc="RainbowCursor Autocmd toggle"},
+  {"<leader>rts",function() _G.RainbowCursor.API.Timer_Start() end,   desc="RainbowCursor Timer start"},
+  {"<leader>rtS",function() _G.RainbowCursor.API.Timer_Stop() end,    desc="RainbowCursor Timer stop"},
+  {"<leader>rtt",function() _G.RainbowCursor.API.Timer_Toggle() end,  desc="RainbowCursor Timer toggle"},
+  {"<leader>ras",function() _G.RainbowCursor.API.Autocmd_Start() end, desc="RainbowCursor Autocmd start"},
+  {"<leader>raS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  desc="RainbowCursor Autocmd stop"},
+  {"<leader>rat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,desc="RainbowCursor Autocmd toggle"},
  },
  opts={
-  hlgroup     ="RainbowCursor",
-  -- The RainbowCursor High Light Group's name.
-  autocmd     ={
+  hlgroup ="RainbowCursor",
+  autocmd ={
    autostart=true,
-   -- Whether or not to automatically start autocmd after setup.
-   interval =90,
-   -- How many time that the event triggered will loop over the color table.
+   loopover =36,
    group    ="RainbowCursor",
-   -- The RainbowCursor Autocmd Group's name .
    event    ={"CursorMoved","CursorMovedI"},
-   -- The RainbowCursor Autocmd's trigger event .
   },
-  timer       ={
+  timer   ={
    autostart=true,
-   -- Whether or not to automatically start timer after setup.
-   interval=18000,
-   -- How long (in milliseconds) that the timer will need to loop over the color table.
+   loopover=180,
+   interval=100,
   },
-  color_amount=360,
-  -- How many colors are in the color table.
-  -- If *timer.interval is 18000 and *color_amount is 360, then the color will change in every 50 ms (18000/360)
-  -- The speed can't not lower than 1ms, because of the Neovim's limit.
-  -- Set less *color_amount make color change seems faster and more will make it smoother.
-  hue_start   =0,
-  -- The hue of hsl that RainbowCursor start with.
-  -- 0 means red, and 360 means red too.
-  saturation  =100,
-  -- The saturation of hsl, lower than 100 will dim the color.
-  lightness   =50,
-  -- The lightness of hsl, high or lower than 50 will make color lighter or darker.
-  others      ={
+  channels={
+   format="hsl",
+   {{0,360,1}},
+   {{100,100,0}},
+   {{50,50,0}},
+  },
+  others  ={
    create_cmd=true,
-   -- Create command "RainbowCursor" after setup.
-   -- If use API, cmd may not necessary.
    create_var=true,
-   -- Create Lua global variable "_G.RainbowCursor" after setup.
    create_api=true,
-   -- Create a Module API after setup.
-   -- require("rainbowcursor").API,
-   -- If it sets false, you can still use
-   -- require("rainbowcursor.api").
-   reuse_opts=false,
-   -- New setup reuse old options or base on default options.
   },
  },
  dependencies={
@@ -272,62 +249,57 @@ M[1]="abcdefg233/rainbowcursor.nvim"
 -- Event
 M.cmd={"RainbowCursor"}
 M.keys={
- {"<leader>rcts",_G.RainbowCursor.API.Timer_Start,   desc="RainbowCursor Timer start"},
- {"<leader>rctS",_G.RainbowCursor.API.Timer_Stop,    desc="RainbowCursor Timer stop"},
- {"<leader>rctt",_G.RainbowCursor.API.Timer_Toggle,  desc="RainbowCursor Timer toggle"},
- {"<leader>rcas",_G.RainbowCursor.API.Autocmd_Start, desc="RainbowCursor Autocmd start"},
- {"<leader>rcaS",_G.RainbowCursor.API.Autocmd_Stop,  desc="RainbowCursor Autocmd stop"},
- {"<leader>rcat",_G.RainbowCursor.API.Autocmd_Toggle,desc="RainbowCursor Autocmd toggle"},
+ {"<leader>rts",function() _G.RainbowCursor.API.Timer_Start() end,   desc="RainbowCursor Timer start"},
+ {"<leader>rtS",function() _G.RainbowCursor.API.Timer_Stop() end,    desc="RainbowCursor Timer stop"},
+ {"<leader>rtt",function() _G.RainbowCursor.API.Timer_Toggle() end,  desc="RainbowCursor Timer toggle"},
+ {"<leader>ras",function() _G.RainbowCursor.API.Autocmd_Start() end, desc="RainbowCursor Autocmd start"},
+ {"<leader>raS",function() _G.RainbowCursor.API.Autocmd_Stop() end,  desc="RainbowCursor Autocmd stop"},
+ {"<leader>rat",function() _G.RainbowCursor.API.Autocmd_Toggle() end,desc="RainbowCursor Autocmd toggle"},
 }
 -- Setup
 M.opts={
- hlgroup     ="RainbowCursor",
- -- The RainbowCursor High Light Group's name.
- autocmd     ={
+ hlgroup ="RainbowCursor",
+ autocmd ={
   autostart=true,
-  -- Whether or not to automatically start autocmd after setup.
-  interval =90,
-  -- How many time that the event triggered will loop over the color table.
+  loopover =36,
   group    ="RainbowCursor",
-  -- The RainbowCursor Autocmd Group's name .
   event    ={"CursorMoved","CursorMovedI"},
-  -- The RainbowCursor Autocmd's trigger event .
  },
- timer       ={
+ timer   ={
   autostart=true,
-  -- Whether or not to automatically start timer after setup.
-  interval=18000,
-  -- How long (in milliseconds) that the timer will need to loop over the color table.
+  loopover=180,
+  interval=100,
  },
- color_amount=360,
- -- How many colors are in the color table.
- -- If *timer.interval is 18000 and *color_amount is 360, then the color will change in every 50 ms (18000/360)
- -- The speed can't not lower than 1ms, because of the Neovim's limit.
- -- Set less *color_amount make color change seems faster and more will make it smoother.
- hue_start   =0,
- -- The hue of hsl that RainbowCursor start with.
- -- 0 means red, and 360 means red too.
- saturation  =100,
- -- The saturation of hsl, lower than 100 will dim the color.
- lightness   =50,
- -- The lightness of hsl, high or lower than 50 will make color lighter or darker.
- others      ={
+ channels={
+  format="hsl",
+  {{0,360,1}},
+  {{100,100,0}},
+  {{50,50,0}},
+ },
+ others  ={
   create_cmd=true,
-  -- Create command "RainbowCursor" after setup.
-  -- If use API, cmd may not necessary.
   create_var=true,
-  -- Create Lua global variable "_G.RainbowCursor" after setup.
   create_api=true,
-  -- Create a Module API after setup.
-  -- require("rainbowcursor").API,
-  -- If it sets false, you can still use
-  -- require("rainbowcursor.api").
-  reuse_opts=false,
-  -- New setup reuse old options or base on default options.
  },
 }
 M.dependencies={
  "abcdefg233/hcutil.nvim"
 }
 return M
+```
+
+# [Which-key](https://github.com/folke/which-key.nvim) Binding
+
+```lua
+require("which-key").register({
+ ["<leader>r"]={
+  name="RainbowCursor",
+  ["t"]={
+   name="Timer",
+  },
+  ["a"]={
+   name="Autocmd",
+  },
+ },
+})
 ```

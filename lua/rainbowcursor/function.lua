@@ -1,60 +1,121 @@
 local HCUtil=require("hcutil")
 local Config=require("rainbowcursor.config")
-local floor=math.floor
 local M={}
 local H={}
----@param p number
----@param q number
----@param t number
-local function hue_to_rgb(p,q,t)
- if t<0 then t=t+1 elseif -t<-1 then t=t-1 end
- if t<1/6 then return p+(q-p)*6*t end
- if t<1/2 then return q end
- if t<2/3 then return p+(q-p)*(2/3-t)*6 end
- return p
-end
----@param h number # Hue
----@param s number # Saturation
----@param l number # Lightness
----@return ... integer
-local function hsl_to_rgb(h,s,l)
- l=l/100
- if s==0 then
-  l=floor(l*255)
-  return l,l,l
- end
- h,s=h/360,s/100
- local q=l<0.5 and l*(1+s) or l+s-l*s
- local p=2*l-q
- local r,g,b=hue_to_rgb(p,q,h+1/3),hue_to_rgb(p,q,h),hue_to_rgb(p,q,h-1/3)
- return floor(r*255),floor(g*255),floor(b*255)
-end
 local function rgb_to_colorcode(r,g,b)
  return string.format("#%02x%02x%02x",r,g,b)
 end
-local function make_color_table()
- local color_table={}
- local hue        =Config.options.hue_start
- local saturation =Config.options.saturation
- local lightness  =Config.options.lightness
- local step       =360/Config.options.color_amount
- while hue<360 do
-  table.insert(color_table,rgb_to_colorcode(hsl_to_rgb(hue,saturation,lightness)))
-  hue=hue+step
- end
- return color_table
-end
-local function create_color_iter(step)
- local hlgroup     =Config.options.hlgroup
- local color_amount=Config.options.color_amount
- local hl_opts     ={}
- return function()
-  local int_pos=floor(H.color_pos)
-  if int_pos>=H.color_pos then
-   hl_opts.bg=H.color_table[int_pos]
-   vim.api.nvim_set_hl(0,hlgroup,hl_opts)
+---@class range
+---@field [1] number # begin
+---@field [2] number # fini
+---@field [3] number # step
+---@alias ranges range[]
+---@param ranges ranges
+---@return number[]
+local function get_channel_map(ranges)
+ local channel_map={}
+ for _,range in ipairs(ranges) do
+  local begin,fini,step=unpack(range)
+  if begin==fini or step==0 then
+   if begin~=channel_map[#channel_map] then
+    table.insert(channel_map,begin)
+   end
+  else
+   if begin>=fini then
+    step=-step
+   end
+   for channel_code=begin,fini,step do
+    table.insert(channel_map,channel_code)
+   end
   end
-  H.color_pos=H.color_pos%color_amount+step
+ end
+ return channel_map
+end
+---@class Color_Channel
+---@field map number[]
+---@field max number
+---@field index number
+---@field iter fun(self):number|nil
+local Color_Channel={}
+function Color_Channel:iter()
+ self.index=self.index+1
+ if self.index>self.max then
+  return
+ end
+ return self.map[self.index]
+end
+---@param ranges ranges
+---@return Color_Channel|number
+function Color_Channel:new(ranges)
+ local New=setmetatable({},{__index=self})
+ New.index=ranges[1][1]+1
+ New.map=get_channel_map(ranges)
+ New.max=#New.map
+ if New.max==1 then
+  return New.map[1]
+ end
+ return New
+end
+---@class Color_Object
+---@field iter fun(self):fun():number[]|nil
+---@field static_channels number[] # code of channels.
+---@field dynamic_channels Color_Channel[]
+local Color_Object={}
+function Color_Object:iter()
+ return function()
+  for index,channel in pairs(self.dynamic_channels) do
+   local code=channel:iter()
+   if code==nil then return end
+   self.static_channels[index]=code
+  end
+  return self.static_channels
+ end
+end
+---@param ranges ranges
+---@return Color_Object
+function Color_Object:new(ranges)
+ local New=setmetatable({},{__index=self})
+ New.static_channels={}
+ New.dynamic_channels={}
+ for index,range in ipairs(ranges) do
+  local Channel=Color_Channel:new(range)
+  if type(Channel)=="number" then
+   New.static_channels[index]=Channel
+  else
+   New.dynamic_channels[index]=Channel
+  end
+ end
+ return New
+end
+---@class Color_Table
+---@field tab table[]
+---@field index integer
+---@field fini integer
+local Color_Table={}
+function Color_Table:iter(step)
+ local code=self.tab[math.floor(self.index+1)]
+ self.index=(self.index+step)%self.fini
+ return code
+end
+function Color_Table:new()
+ local New=setmetatable({},{__index=self})
+ local color_object=Color_Object:new(Config.options.channels)
+ New.tab={}
+ for channel_values in color_object:iter() do
+  local r,g,b=H.format(unpack(channel_values))
+  local color_code=rgb_to_colorcode(r,g,b)
+  table.insert(New.tab,{bg=color_code})
+ end
+ New.fini=#New.tab
+ New.index=1
+ return New
+end
+---@param interval number
+local function create_color_iter(color_table,interval)
+ local hlgroup=Config.options.hlgroup
+ local step=color_table.fini/interval
+ return function()
+  vim.api.nvim_set_hl(0,hlgroup,color_table:iter(step))
  end
 end
 local function set_cursor_hlgroup(hlgroup)
@@ -76,7 +137,7 @@ local function update_cursor_hlgroup(target)
  if H.hlgroup_on==false then
   set_cursor_hlgroup(Config.options.hlgroup)
   H.hlgroup_on=true
- elseif H.main_timer:is_active()==false and H.autocmd_obj.active==false then
+ elseif H.Timer.main:is_active()==false and H.Autocmd.main.active==false then
   set_cursor_hlgroup(false)
   H.hlgroup_on=false
  end
@@ -85,52 +146,55 @@ local Actions={}
 M.Actions=Actions
 Actions.Timer={
  Start=function()
-  if H.main_timer:is_active() then
+  if H.Timer.main:is_active()==true then
    print("RainbowCursor: Timer Start failed, The Timer is active.")
   else
-   local interval=floor(Config.options.timer.interval/Config.options.color_amount)
    update_cursor_hlgroup(true)
-   H.main_timer:start(0,interval,H.scheduled_color_iter)
+   H.Timer.main:start(0,H.Timer.interval,H.Timer.color_iter)
   end
  end,
  Stop=function()
-  if H.main_timer:is_active() then
-   H.main_timer:stop()
+  if H.Timer.main:is_active()==true then
+   H.Timer.main:stop()
    update_cursor_hlgroup(false)
   else
    print("RainbowCursor: Timer Stop failed, The Timer is already inactive.")
   end
  end,
  Toggle=function()
-  if H.main_timer:is_active() then
-   Actions.Timer.Stop()
+  if H.Timer.main:is_active()==true then
+   H.Timer.main:stop()
+   update_cursor_hlgroup(false)
   else
-   Actions.Timer.Start()
+   update_cursor_hlgroup(true)
+   H.Timer.main:start(0,H.Timer.interval,H.Timer.color_iter)
   end
  end,
 }
 Actions.Autocmd={
  Start=function()
-  if H.autocmd_obj.active then
+  if H.Autocmd.main.active==true then
    print("RainbowCursor: Autocmd Start failed, The Autocmd is active.")
   else
    update_cursor_hlgroup(true)
-   H.autocmd_obj:start()
+   H.Autocmd.main:start()
   end
  end,
  Stop=function()
-  if H.autocmd_obj.active then
-   H.autocmd_obj:delete()
+  if H.Autocmd.main.active==true then
+   H.Autocmd.main:delete()
    update_cursor_hlgroup(false)
   else
-   print("RainbowCursor: Autocmd Stop failed, The Autocmd is active.")
+   print("RainbowCursor: Autocmd Stop failed, The Autocmd is inactive.")
   end
  end,
  Toggle=function()
-  if H.autocmd_obj.active then
-   Actions.Autocmd.Start()
+  if H.Autocmd.main.active then
+   update_cursor_hlgroup(true)
+   H.Autocmd.main:start()
   else
-   Actions.Autocmd.Stop()
+   H.Autocmd.main:delete()
+   update_cursor_hlgroup(false)
   end
  end,
 }
@@ -151,29 +215,44 @@ function M.RainbowCursor(...)
  end
 end
 local function satus_setup()
- H.hlgroup_on      =false
- H.color_table=make_color_table()
- H.color_pos  =1
+ H.hlgroup_on=false
 end
 local function timer_setup()
- H.main_timer          =vim.loop.new_timer()
- H.timer_color_iter    =create_color_iter(1)
- H.scheduled_color_iter=vim.schedule_wrap(H.timer_color_iter)
+ H.Timer           ={}
+ H.Timer.main      =vim.loop.new_timer()
+ H.Timer.interval  =Config.options.timer.interval
+ local color_iter  =create_color_iter(H.color_table,Config.options.timer.loopover)
+ ---@type function
+ H.Timer.color_iter=vim.schedule_wrap(color_iter)
 end
 local function autocmd_setup()
- H.autocmd_color_iter=create_color_iter(Config.options.color_amount/Config.options.autocmd.interval)
- H.autocmd_obj       =HCUtil.create_autocmd_object(Config.options.autocmd.group,{
+ H.Autocmd           ={}
+ local color_iter    =create_color_iter(H.color_table,Config.options.autocmd.loopover)
+ ---@type function
+ H.Autocmd.color_iter=vim.schedule_wrap(color_iter)
+ H.Autocmd.main      =HCUtil.Autocmd:create(Config.options.autocmd.group,{
   func={Config.options.autocmd.event,{
-   callback=H.autocmd_color_iter,
+   callback=H.Autocmd.color_iter,
   }},
  })
 end
+local function format_setup()
+ local default_formats=require("rainbowcursor.format")
+ local default_format=default_formats[Config.options.channels.format]
+ if default_formats[Config.options.channels.format] then
+  H.format=default_format
+ elseif type(Config.options.channels.format)=="function" then
+  H.format=Config.options.channels.format
+ end
+end
 function M.setup()
  H={}
+ format_setup()
  satus_setup()
+ H.color_table=Color_Table:new()
  timer_setup()
  autocmd_setup()
- M.TimerColorIter  =H.timer_color_iter
- M.AutocmdColorIter=H.autocmd_color_iter
+ M.TimerColorIter  =H.Timer.color_iter
+ M.AutocmdColorIter=H.Autocmd.color_iter
 end
 return M
