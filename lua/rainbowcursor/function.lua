@@ -231,7 +231,7 @@ local function autocmd_setup()
  ---@type function
  H.Autocmd.color_iter=vim.schedule_wrap(color_iter)
  H.Autocmd.main      =HCUtil.Autocmd:create(Config.options.autocmd.group,{
-  func={Config.options.autocmd.event,{
+  {Config.options.autocmd.event,{
    callback=H.Autocmd.color_iter,
   }},
  })
