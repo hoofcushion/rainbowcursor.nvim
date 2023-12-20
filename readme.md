@@ -8,7 +8,7 @@ https://github.com/abcdefg233/rainbowcursor.nvim/assets/32760059/fc28f6be-f9ea-4
 
 ## Important
 
-The command `redraw` could't refresh the cursor color in some terminal simulator, and I don't know why.
+The `vim.api.nvim_set_hl` and `redraw` could't refresh the cursor color in some terminal simulator , and I don't know why.
 
 | Terminals I tried | Is working |
 | :---------------- | ---------- |

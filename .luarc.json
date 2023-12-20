@@ -2,9 +2,10 @@
  "runtime": {
   "version": "LuaJIT",
   "path": [
-   "?.lua",
+   "lua/?/init.lua",
+   "?/init.lua",
    "lua/?.lua",
-   "?/init.lua"
+   "?.lua"
   ]
  },
  "diagnostics.globals": [
