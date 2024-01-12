@@ -19,10 +19,10 @@ function M.setup(user_options)
  end
  if loaded==false then
   if Config.options.autocmd.autostart==true then
-   Function.Actions.RainbowCursor.Autocmd.Start()
+   vim.schedule(Function.Actions.RainbowCursor.Autocmd.Start)
   end
   if Config.options.timer.autostart==true then
-   Function.Actions.RainbowCursor.Timer.Start()
+   vim.schedule(Function.Actions.RainbowCursor.Timer.Start)
   end
   loaded=true
  end
