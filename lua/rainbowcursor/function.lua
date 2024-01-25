@@ -130,35 +130,30 @@ local function set_cursor_hlgroup(hlgroup)
  vim.opt.guicursor=guicursor
 end
 ---@param target boolean
-local function update_cursor_hlgroup(target)
- if target==H.hlgroup_on then
-  return
+local update_cursor_hlgroup=vim.schedule_wrap(function(target)
+ if target~=H.hlgroup_on then
+  if target==true then
+   set_cursor_hlgroup(Config.options.hlgroup)
+   H.hlgroup_on=true
+  elseif not (H.Timer.main:is_active() and H.Autocmd.main.active) then
+   set_cursor_hlgroup(false)
+   H.hlgroup_on=false
+  end
  end
- if H.hlgroup_on==false then
-  set_cursor_hlgroup(Config.options.hlgroup)
-  H.hlgroup_on=true
- elseif H.Timer.main:is_active()==false and H.Autocmd.main.active==false then
-  set_cursor_hlgroup(false)
-  H.hlgroup_on=false
- end
-end
+end)
 local Actions={}
 M.Actions=Actions
 Actions.Timer={
  Start=function()
-  if H.Timer.main:is_active()==true then
-   print("RainbowCursor: Timer Start failed, The Timer is active.")
-  else
-   update_cursor_hlgroup(true)
+  if H.Timer.main:is_active()==false then
    H.Timer.main:start(0,H.Timer.interval,H.Timer.color_iter)
+   update_cursor_hlgroup(true)
   end
  end,
  Stop=function()
   if H.Timer.main:is_active()==true then
    H.Timer.main:stop()
    update_cursor_hlgroup(false)
-  else
-   print("RainbowCursor: Timer Stop failed, The Timer is already inactive.")
   end
  end,
  Toggle=function()
@@ -166,48 +161,56 @@ Actions.Timer={
    H.Timer.main:stop()
    update_cursor_hlgroup(false)
   else
-   update_cursor_hlgroup(true)
    H.Timer.main:start(0,H.Timer.interval,H.Timer.color_iter)
+   update_cursor_hlgroup(true)
   end
  end,
 }
 Actions.Autocmd={
  Start=function()
-  if H.Autocmd.main.active==true then
-   print("RainbowCursor: Autocmd Start failed, The Autocmd is active.")
-  else
-   update_cursor_hlgroup(true)
+  if H.Autocmd.main.active==false then
    H.Autocmd.main:start()
+   update_cursor_hlgroup(true)
   end
  end,
  Stop=function()
   if H.Autocmd.main.active==true then
    H.Autocmd.main:delete()
    update_cursor_hlgroup(false)
-  else
-   print("RainbowCursor: Autocmd Stop failed, The Autocmd is inactive.")
   end
  end,
  Toggle=function()
-  if H.Autocmd.main.active then
-   update_cursor_hlgroup(true)
-   H.Autocmd.main:start()
-  else
+  if H.Autocmd.main.active==true then
    H.Autocmd.main:delete()
    update_cursor_hlgroup(false)
+  else
+   H.Autocmd.main:start()
+   update_cursor_hlgroup(true)
   end
  end,
 }
 Actions.RainbowCursor={
  Timer=Actions.Timer,
  Autocmd=Actions.Autocmd,
+ Start=function()
+  Actions.Autocmd.Start()
+  Actions.Timer.Start()
+ end,
+ Stop=function()
+  Actions.Autocmd.Stop()
+  Actions.Timer.Stop()
+ end,
+ Toggle=function()
+  Actions.Autocmd.Toggle()
+  Actions.Timer.Toggle()
+ end,
 }
 function M.RainbowCursor(...)
  local args={...}
  local action=Actions.RainbowCursor
  for i=1,#args do
   action=action[args[i]]
-  if not action then return end
+  if action==nil then return end
   if type(action)=="function" then
    action()
    return
@@ -231,9 +234,7 @@ local function autocmd_setup()
  ---@type function
  H.Autocmd.color_iter=vim.schedule_wrap(color_iter)
  H.Autocmd.main      =HCUtil.Autocmd:create(Config.options.autocmd.group,{
-  {Config.options.autocmd.event,{
-   callback=H.Autocmd.color_iter,
-  }},
+  {Config.options.autocmd.event,{callback=H.Autocmd.color_iter}},
  })
 end
 local function format_setup()

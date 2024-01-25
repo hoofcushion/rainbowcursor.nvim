@@ -8,7 +8,7 @@ local RainbowCursor=function(cmd)
 end
 local completions={
  RainbowCursor={
-  {{"Autocmd","Timer"}},
+  {{"Start","Stop","Toggle","Autocmd","Timer"}},
   Timer={
    {{"Start","Stop","Toggle"}},
   },

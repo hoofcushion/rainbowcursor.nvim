@@ -66,7 +66,7 @@ function M.setup(user_options)
   return
  end
  local opts=vim.tbl_deep_extend("force",default_opts,user_options)
- HCUtil.Validate.tab(opts,validate_table)
+ HCUtil.Validate.tab(opts,validate_table,"RainbowCursorConfig")
  M.options=opts
 end
 return M
