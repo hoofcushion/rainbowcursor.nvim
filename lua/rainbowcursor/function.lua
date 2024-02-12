@@ -99,7 +99,7 @@ function Color_Table:iter(step)
 end
 function Color_Table:new()
  local New=setmetatable({},{__index=self})
- local color_object=Color_Object:new(Config.options.channels)
+ local color_object=Color_Object:new(Config.options.rainbowcursor.channels)
  New.tab={}
  for channel_values in color_object:iter() do
   local r,g,b=H.format(unpack(channel_values))
@@ -112,7 +112,7 @@ function Color_Table:new()
 end
 ---@param interval number
 local function create_color_iter(color_table,interval)
- local hlgroup=Config.options.hlgroup
+ local hlgroup=Config.options.rainbowcursor.hlgroup
  local step=color_table.fini/interval
  return function()
   vim.api.nvim_set_hl(0,hlgroup,color_table:iter(step))
@@ -133,7 +133,7 @@ end
 local update_cursor_hlgroup=vim.schedule_wrap(function(target)
  if target~=H.hlgroup_on then
   if target==true then
-   set_cursor_hlgroup(Config.options.hlgroup)
+   set_cursor_hlgroup(Config.options.rainbowcursor.hlgroup)
    H.hlgroup_on=true
   elseif not (H.Timer.main:is_active() and H.Autocmd.main.active) then
    set_cursor_hlgroup(false)
@@ -223,27 +223,27 @@ end
 local function timer_setup()
  H.Timer           ={}
  H.Timer.main      =vim.loop.new_timer()
- H.Timer.interval  =Config.options.timer.interval
- local color_iter  =create_color_iter(H.color_table,Config.options.timer.loopover)
+ H.Timer.interval  =Config.options.rainbowcursor.timer.interval
+ local color_iter  =create_color_iter(H.color_table,Config.options.rainbowcursor.timer.loopover)
  ---@type function
  H.Timer.color_iter=vim.schedule_wrap(color_iter)
 end
 local function autocmd_setup()
  H.Autocmd           ={}
- local color_iter    =create_color_iter(H.color_table,Config.options.autocmd.loopover)
+ local color_iter    =create_color_iter(H.color_table,Config.options.rainbowcursor.autocmd.loopover)
  ---@type function
  H.Autocmd.color_iter=vim.schedule_wrap(color_iter)
- H.Autocmd.main      =HCUtil.Autocmd:create(Config.options.autocmd.group,{
-  {Config.options.autocmd.event,{callback=H.Autocmd.color_iter}},
+ H.Autocmd.main      =HCUtil.Autocmd:create(Config.options.rainbowcursor.autocmd.group,{
+  {Config.options.rainbowcursor.autocmd.event,{callback=H.Autocmd.color_iter}},
  })
 end
 local function format_setup()
  local default_formats=require("rainbowcursor.format")
- local default_format=default_formats[Config.options.channels.format]
- if default_formats[Config.options.channels.format] then
+ local default_format=default_formats[Config.options.rainbowcursor.channels.format]
+ if default_formats[Config.options.rainbowcursor.channels.format] then
   H.format=default_format
- elseif type(Config.options.channels.format)=="function" then
-  H.format=Config.options.channels.format
+ elseif type(Config.options.rainbowcursor.channels.format)=="function" then
+  H.format=Config.options.rainbowcursor.channels.format
  end
 end
 function M.setup()

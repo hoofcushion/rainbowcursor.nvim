@@ -18,10 +18,10 @@ function M.setup(user_options)
   M.API=nil
  end
  if loaded==false then
-  if Config.options.autocmd.autostart==true then
+  if Config.options.rainbowcursor.autocmd.autostart==true then
    vim.schedule(Function.Actions.RainbowCursor.Autocmd.Start)
   end
-  if Config.options.timer.autostart==true then
+  if Config.options.rainbowcursor.timer.autostart==true then
    vim.schedule(Function.Actions.RainbowCursor.Timer.Start)
   end
   loaded=true
