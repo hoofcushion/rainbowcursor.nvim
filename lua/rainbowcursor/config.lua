@@ -48,22 +48,16 @@ local validate_table={
    loopover=function(x) return number(x) and x>0,"number x, x>0" end,
    interval=function(x) return integer(x) and x>0,"integer x, x>0" end,
   },
-  channels=HCUtil.Validate.mk_union(
+  channels=HCUtil.Validate.mk_punion(
    {
-    format=HCUtil.Validate.mk_enum(
-     {hsl=true,rgb=true}
-    ),
-   },{
-    attr="list",
-    data={
-     attr="list",
-     data={
-      [1]="number",
-      [2]="number",
-      [3]=function(x) return number(x) and x>=0,"number x, x>=0" end,
-     },
-    },
-   }),
+    format=HCUtil.Validate.mk_enum("hsl","rgb"),
+   },
+   HCUtil.Validate.mk_square({
+    [1]="number",
+    [2]="number",
+    [3]=function(x) return number(x) and x>=0,"number x, x>=0" end,
+   })
+  ),
  },
  others       ={
   create_cmd="boolean",
