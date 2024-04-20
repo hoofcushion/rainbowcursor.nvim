@@ -4,7 +4,7 @@ A plugin for Neovim to rainbow the cursor.
 
 ## Demo
 
-https://github.com/abcdefg233/rainbowcursor.nvim/assets/32760059/fc28f6be-f9ea-4c02-a5c5-79bcbfc3ddaf
+https://github.com/hoofcushion/rainbowcursor.nvim/assets/32760059/fc28f6be-f9ea-4c02-a5c5-79bcbfc3ddaf
 
 ## Important
 
@@ -24,11 +24,11 @@ With [Lazy](https://github.com/folke/lazy.nvim)
 
 ```lua
 local spec = {
- "abcdefg233/rainbowcursor.nvim",
+ "hoofcushion/rainbowcursor.nvim",
  cmd = { "RainbowCursor" },
  config = true,
  dependencies = {
-  "abcdefg233/hcutil.nvim",
+  "hoofcushion/hcutil.nvim",
  },
 }
 ```
@@ -37,7 +37,7 @@ Configuration
 
 ```lua
 local spec = {
- "abcdefg233/rainbowcursor.nvim",
+ "hoofcushion/rainbowcursor.nvim",
  cmd = { "RainbowCursor" },
  opts = {
   rainbowcursor = {
@@ -88,7 +88,7 @@ local spec = {
   },
  },
  dependencies = {
-  "abcdefg233/hcutil.nvim",
+  "hoofcushion/hcutil.nvim",
  },
 }
 ```
@@ -332,7 +332,7 @@ Convenient setup for lazy.nvim users
 
 ```lua
 local spec = {
- "abcdefg233/rainbowcursor.nvim",
+ "hoofcushion/rainbowcursor.nvim",
  cmd = { "RainbowCursor" },
  -- keys = {
  --  Use the lazy keys above, if you want.
@@ -365,7 +365,7 @@ local spec = {
   },
  },
  dependencies = {
-  "abcdefg233/hcutil.nvim",
+  "hoofcushion/hcutil.nvim",
  },
 }
 ```
@@ -374,7 +374,7 @@ Modularize
 
 ```lua
 local M = {}
-M[1] = "abcdefg233/rainbowcursor.nvim"
+M[1] = "hoofcushion/rainbowcursor.nvim"
 M.cmd = { "RainbowCursor" }
 -- M.keys = {
 --  Use the lazy keys above, if you want.
@@ -407,7 +407,7 @@ M.opts = {
  },
 }
 M.dependencies = {
- "abcdefg233/hcutil.nvim",
+ "hoofcushion/hcutil.nvim",
 }
 return M
 ```
