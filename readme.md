@@ -1,5 +1,7 @@
 # rainbowcursor.nvim
 
+**Note: This project has been deprecated**
+
 A plugin for Neovim to rainbow the cursor.
 
 ## Demo
